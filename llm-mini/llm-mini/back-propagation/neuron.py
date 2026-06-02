@@ -28,4 +28,17 @@ o.grad = 1.0
 #do/dn = 1 - o.data**2
 n.grad = 1 - o.data**2
 
+# backpropagting through + sign, just transfer gradient equally to back nodes whereever plus sign comes
+x1w1x2w2.grad = 0.5
+b.grad = 0.5
+
+#plus again so distribute gradien equally again to back nodes of b and x1w1x2w2
+
+x1w1.grad = 0.5
+x2w2.grad = 0.5
+x2.grad = w2.data * x2w2.grad
+w2.grad = x2.data * x2w2.grad
+x1.grad = w1.data * x1w1.grad
+w1.grad = x1.data * x1w1.grad
+
 draw_dot(o)
