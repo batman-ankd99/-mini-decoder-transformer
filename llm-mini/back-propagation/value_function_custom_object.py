@@ -13,8 +13,14 @@ class Value:
         out = Value(self.data * other.data, (self, other), '*')
         return out
 
+    def tanh(self):
+        x = self.data
+        t = (math.exp(2*x)-1)/(math.exp(2*x)+1)
+        out = Value(t, (self,), 'tanh')    
+
 a = Value(2.0, label='a')
 b = Value(-3.0, label='b')
 c = Value(10, label='c')
-d = a*b + c
+e = a*b; e.label = 'e'
+d = e + c; d.label = 'd'
 d
