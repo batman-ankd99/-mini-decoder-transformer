@@ -16,6 +16,11 @@ class Value:
           other.grad += 1 * out.grad
         out._backward = _backward
         return out
+
+    def zero_grad(self):
+        self.grad = 0.0
+        for child in self._prev:
+            child.zero_grad()    
     def __mul__(self, other):
         out = Value(self.data * other.data, (self, other), '*')
         def _backward():
@@ -31,5 +36,5 @@ class Value:
 
         def _backward():
             self.grad += (1 - t**2) * out.grad       # iska formula banta  - 1 - o**2, ab is case me to o but koi bhi ho sakti hai, upar out aage wali node hi hai, out.grad coming from ahead we multiple ahead gradient with local gradient. out.grad is ahead nodes gradient which is 1 here.
-        out._backward = _backward()
+        out._backward = _backward
         return out
