@@ -9,7 +9,9 @@ class Value:
 
     def __repr__(self):
         return f"Value(data={self.data})"
+
     def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data + other.data, (self, other), '+')
         def _backward():
           self.grad += 1 * out.grad
@@ -17,11 +19,8 @@ class Value:
         out._backward = _backward
         return out
 
-    def zero_grad(self):
-        self.grad = 0.0
-        for child in self._prev:
-            child.zero_grad()
     def __mul__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data * other.data, (self, other), '*')
         def _backward():
           self.grad += other.data * out.grad
