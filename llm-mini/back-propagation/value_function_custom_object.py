@@ -37,6 +37,15 @@ class Value:
     def __rmul__(self, other):
         return self * other
 
+    def exp(self):
+        x = self.data
+        out = Value(math.exp(x), (self,), 'exp')
+
+        def _backward():
+            self.grad = out.data * out.grad
+        out._backward = _backward
+        return out     
+
     def __pow__(self, other):
       assert isinstance(other, (int,float))
       x = self.data
