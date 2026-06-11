@@ -38,3 +38,17 @@ class Value:
             self.grad += (1 - t**2) * out.grad       # iska formula banta  - 1 - o**2, ab is case me to o but koi bhi ho sakti hai, upar out aage wali node hi hai, out.grad coming from ahead we multiple ahead gradient with local gradient. out.grad is ahead nodes gradient which is 1 here.
         out._backward = _backward
         return out
+
+    def backward(self):
+      vis = set()
+      topo = []                                #first node being the start point of mathematical expression, last entry will be the final output i.e. neuron
+      def node_topo(v):                        #DFS way fo sorting Graph nodes
+        if v not in vis:
+            vis.add(v)
+            for child in v._prev:
+              node_topo(child)
+            topo.append(v)
+      node_topo(self)
+      self.grad = 1.0
+      for node in reversed(topo):
+            node._backward()
