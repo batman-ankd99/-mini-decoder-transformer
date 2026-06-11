@@ -37,6 +37,26 @@ class Value:
     def __rmul__(self, other):
         return self * other
 
+    def __pow__(self, other):
+      assert isinstance(other, (int,float))
+      x = self.data
+      out = Value(x**other, (self,), f'**{other}')
+      def _backward():
+        self.grad = (other*(x**(other-1))) * out.grad
+      out._backward = _backward
+      return out
+
+    def __neg__(self):
+        return self*(-1)
+
+    def __sub__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        return self + (-other)
+
+    def __truediv__(self, other):
+      other = other if isinstance(other, Value) else Value(other)
+      return self*(other**-1)        #differntiate and Value wrappibng doesnt needed, as it calls mul and power function
+
     def tanh(self):
         x = self.data
         t = (math.exp(2*x)-1)/(math.exp(2*x)+1)
