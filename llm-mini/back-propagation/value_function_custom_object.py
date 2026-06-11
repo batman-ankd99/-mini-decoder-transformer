@@ -11,13 +11,16 @@ class Value:
         return f"Value(data={self.data})"
 
     def __add__(self, other):
-        other = other if isinstance(other, Value) else Value(other)
+        other = other if isinstance(other, Value) else Value(other) # checks if other is of type Value - if true returns other if not then wraps other in Value(other)
         out = Value(self.data + other.data, (self, other), '+')
         def _backward():
           self.grad += 1 * out.grad
           other.grad += 1 * out.grad
         out._backward = _backward
         return out
+
+    def __radd__(self, other):   # called when left operand doesn't know how to add
+        return self + other
 
     def __mul__(self, other):
         other = other if isinstance(other, Value) else Value(other)
@@ -27,6 +30,12 @@ class Value:
           other.grad += self.data * out.grad
         out._backward = _backward
         return out
+
+    def __rmul__(self, other):   # called when left operand doesn't know how to add
+        return self * other
+
+    def __rmul__(self, other):
+        return self * other
 
     def tanh(self):
         x = self.data
