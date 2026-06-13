@@ -11,9 +11,7 @@ class Layers:
     return outs[0] if len(outs) == 1 else outs
 
   def parameters(self):
-    out = []
-    for neuro in self.neurons:
-      out += neuro.paramters()
-    return out
-
-          
+    params = []
+    for neuron in self.neurons:
+      params += neuron.parameters()
+    return params

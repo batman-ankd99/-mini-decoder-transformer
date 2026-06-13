@@ -11,7 +11,7 @@ class MLP:
     return x
 
   def parameters(self):
-    out = []
-    for lay in self.layer:
-      out += lay.paramters()
-    return out
+    params = []
+    for layer in self.layer:
+      params += layer.parameters()
+    return params
