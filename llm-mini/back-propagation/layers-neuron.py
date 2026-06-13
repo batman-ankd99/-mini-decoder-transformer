@@ -8,4 +8,12 @@ class Layers:
     outs = []
     for neuro in self.neurons:
       outs.append(neuro(x))
-    return outs
+    return outs[0] if len(outs) == 1 else outs
+
+  def parameters(self):
+    out = []
+    for neuro in self.neurons:
+      out += neuro.paramters()
+    return out
+
+          

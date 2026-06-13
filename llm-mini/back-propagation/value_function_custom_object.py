@@ -44,7 +44,7 @@ class Value:
         def _backward():
             self.grad = out.data * out.grad
         out._backward = _backward
-        return out     
+        return out
 
     def __pow__(self, other):
       assert isinstance(other, (int,float))
@@ -61,6 +61,9 @@ class Value:
     def __sub__(self, other):
         other = other if isinstance(other, Value) else Value(other)
         return self + (-other)
+
+    def __rsub__(self, other):
+        return Value(other) + (-self)    
 
     def __truediv__(self, other):
       other = other if isinstance(other, Value) else Value(other)

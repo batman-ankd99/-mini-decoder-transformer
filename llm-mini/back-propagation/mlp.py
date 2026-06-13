@@ -9,3 +9,9 @@ class MLP:
     for i in self.layer:
       x = i(x)
     return x
+
+  def parameters(self):
+    out = []
+    for lay in self.layer:
+      out += lay.paramters()
+    return out
