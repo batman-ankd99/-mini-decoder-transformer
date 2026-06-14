@@ -39,6 +39,8 @@ stoi['<E>'] = 27
 itos = {}
 for i,j in enumerate(sorted(chars)):
     itos[i] = j
+itos[26] = '<S>'
+itos[27] = '<E>'    
 
 N = torch.zeros((28,28), dtype=torch.int32)
 
