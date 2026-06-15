@@ -29,18 +29,19 @@ print(len(chars))
 stoi = {}
 
 for i,j in enumerate(sorted(chars)):
-  stoi[j] = i
+  stoi[j] = i + 1 #we are giving . the 0th position
 print(stoi)
 
-stoi['<S>'] = 26
-stoi['<E>'] = 27
-
+#stoi['<S>'] = 26
+#stoi['<E>'] = 27
+stoi['.'] = 0
 ##
 itos = {}
 for i,j in enumerate(sorted(chars)):
-    itos[i] = j
-itos[26] = '<S>'
-itos[27] = '<E>'    
+    itos[i+1] = j
+#itos[26] = '<S>'
+#itos[27] = '<E>'
+itos[0] = '.'
 
 N = torch.zeros((28,28), dtype=torch.int32)
 
