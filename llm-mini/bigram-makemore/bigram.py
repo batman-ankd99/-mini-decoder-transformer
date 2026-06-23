@@ -38,6 +38,7 @@ stoi['.'] = 0
 itos = {i:s for s,i in stoi.items()}
 
 N = torch.zeros((27,27), dtype=torch.int32)
+N = N+1  #smoothening of N
 
 for w in words:
   #chs = ['<S>'] + list(w) + ['<E>']
