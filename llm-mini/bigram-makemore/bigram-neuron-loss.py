@@ -1,13 +1,26 @@
 import torch
 g = torch.Generator().manual_seed(213457)
-w = torch.randn((27,27), generator=g)
+W = torch.randn((27,27), generator=g)
+
+#### creating training data set
+xs, ys = [], []
+for w in words[:1]:
+  chs = ["."] + list(w) + ["."]
+  for ch1,ch2 in zip(chs,chs[1:]):
+    xs.append(stoi[ch1])
+    ys.append(stoi[ch2])
+
+xs = torch.tensor(xs)
+ys = torch.tensor(ys)
+
+## creating neuron function
 
 def neuro(x, y):
   nll_sum = 0
 
   xenc = torch.nn.functional.one_hot(x, num_classes=27)
   xenc = xenc.float()
-  logits = xenc @ w
+  logits = xenc @ W
   count = logits.exp()
   probs = count/count.sum(dim=1,keepdim=True)
   log_likelihood = torch.log(probs)
@@ -18,3 +31,5 @@ def neuro(x, y):
 
   out = nll_sum / len(y)
   return out
+
+neuro(xs, ys)
