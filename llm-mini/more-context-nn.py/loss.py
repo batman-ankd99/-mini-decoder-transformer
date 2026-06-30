@@ -20,7 +20,7 @@ emb = C[X]
 new_emb = torch.cat(torch.unbind(emb,1), dim =1)
 new_emb.shape
 
-h = (new_emb @ W1) + b1
+h = torch.tanh((new_emb @ W1) + b1)
 h.shape
 
 W2 = torch.randn(100,27)

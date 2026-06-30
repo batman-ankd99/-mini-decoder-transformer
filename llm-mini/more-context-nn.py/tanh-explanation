@@ -1,0 +1,10 @@
+Think of it like this: a linear function can only ever draw a straight line (or flat plane in higher dimensions) between input and output. No matter how you stack straight lines on top of each other, you still only ever get... a straight line. That's the mathematical fact from before — two matmuls with nothing in between is secretly just one matmul.
+But real patterns in language aren't straight lines. Whether the next character is "e" doesn't depend on inputs in some simple additive way — it depends on weird combinations: "if the last two letters were 'th', AND the embedding suggests this is a common word, THEN boost 'e'." That kind of conditional, bendy, "if this AND that" logic needs curves, not straight lines.
+tanh is what introduces the bend. It's a squashing function — it takes any number and squeezes it into the range -1 to 1, but not in a straight-line way:
+tanh(-5) ≈ -1
+tanh(-1) ≈ -0.76
+tanh(0)  =  0
+tanh(1)  ≈  0.76
+tanh(5)  ≈  1
+Notice it's steep near 0 and flattens out at the extremes — that curve is the "non-linearity." Once you bend the output like this at every hidden neuron, stacking layers actually does something new each time, because you can no longer simplify two stacked layers back into one straight line. Each layer can now carve out its own little decision boundary, and combined, the network can represent much more complicated, curvy relationships between input and output.
+Simplest way to remember it: linear = can only stretch/rotate/shift in a straight way. Non-linear = can actually bend, so the network can learn "if-this-then-that"-style patterns instead of just weighted sums.
