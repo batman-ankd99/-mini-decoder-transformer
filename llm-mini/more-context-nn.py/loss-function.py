@@ -33,3 +33,18 @@ h = torch.tanh(emb.view(-1,6) @ W1 + b1)
 logits = h @ W2 + b2
 loss = F.cross_entropy(logits, Y)
 loss
+
+#making data set
+def build_dataset():
+  block_size = 3
+  context = [0] * block_size
+  X, Y = [], []
+  for w in words:
+    for char in w+'.':
+      ix = stoi[char]
+      X.append(context)
+      Y.append(ix)
+      context = context[1:] + [ix]
+  X = torch.tensor(X)
+  Y = torch.tensor(Y)
+  return X, Y
