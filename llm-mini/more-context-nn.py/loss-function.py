@@ -48,3 +48,12 @@ def build_dataset():
   X = torch.tensor(X)
   Y = torch.tensor(Y)
   return X, Y
+
+random.seed(42)
+random.shuffle(words)
+n1 = 0.8 * len(words)
+n2 = 0.9 * len(words)
+
+Xtr, Ytr = build_dataset(words[:n1])
+Xdev, Ydev = build_dataset(words[n1:n2])
+Xtest, Ytest = build_dataset(words[n2:])
