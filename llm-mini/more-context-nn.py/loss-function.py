@@ -1,4 +1,4 @@
-def lossfunc(Xdata, Ydata):
+def lossfunc(Xbatch, Ybatch):
   for _ in range(50):
     ## forward pass
     Xenc = C[Xbatch]
@@ -27,6 +27,6 @@ def lossfunc(Xdata, Ydata):
 ## sampling 32 data samples
 
 ix = torch.randint(0, len(X), (32,))     #sampling any random 32 indexes from 2 lakh indexes of total sample
-Xbatch = X[ix]    #not embeded yet
-Ybatch = Y[ix]
-lossfunc(Xbatch, Ybatch)
+Xdata = X[ix]    #not embeded yet
+Ydata = Y[ix]
+lossfunc(Xdata, Ydata)
