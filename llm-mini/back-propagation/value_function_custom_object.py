@@ -34,9 +34,6 @@ class Value:
     def __rmul__(self, other):   # called when left operand doesn't know how to add
         return self * other
 
-    def __rmul__(self, other):
-        return self * other
-
     def exp(self):
         x = self.data
         out = Value(math.exp(x), (self,), 'exp')
@@ -63,7 +60,7 @@ class Value:
         return self + (-other)
 
     def __rsub__(self, other):
-        return Value(other) + (-self)    
+        return Value(other) + (-self)
 
     def __truediv__(self, other):
       other = other if isinstance(other, Value) else Value(other)
