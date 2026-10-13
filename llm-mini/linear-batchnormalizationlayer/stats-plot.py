@@ -25,3 +25,12 @@ for number, layer in enumerate(layers):
 plt.legend()
 plt.title('activation gradient distribution')
 plt.show()
+
+
+legends=[]
+for i,p in enumerate(parameters):
+  if p.ndim == 2:
+      plt.plot([ud[j][i] for j in range(len(ud))])
+      legends.append('param %d' % i)
+plt.plot([0, len(ud)],[-3,-3], 'k')
+plt.legend(legends)

@@ -1,5 +1,6 @@
-max_steps=200000
+max_steps=100
 lossi=[]
+ud = []
 
 for i in range(max_steps):
   ix = torch.randint(0,len(Xtr), (batch_size,), generator=g)
@@ -21,7 +22,10 @@ for i in range(max_steps):
   for p in parameters:
     p.data = p.data - lr*p.grad
 
+  with torch.no_grad():
+    ud.append([(lr*p.grad.std() / p.data.std()).log10().item() for p in parameters])
+
   if i % 10000 == 0:
     print(f'{i:7d}/{max_steps:7d}: {loss.item():.4f}')
   lossi.append(loss.log10().item())
-  break
+  
