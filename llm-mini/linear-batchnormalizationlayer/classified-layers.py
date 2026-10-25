@@ -150,6 +150,7 @@ with torch.no_grad():
   for para in parameters:
     para.requires_grad=True
 
+module = Sequential(layers) #created Sequential object
 
 ## improvement of lecture -6
 layers = [ Embedding(vocab_size, n_embd),
@@ -164,6 +165,26 @@ with torch.no_grad():
       layer.weight *= 1.67
 
   parameters = [p for layer in layers for p in layer.parameters()]
+  for para in parameters:
+    para.requires_grad=True
+
+
+#modulerize approach
+
+model = Sequential([
+           Embedding(vocab_size, n_embd),
+           Flatten(),
+           Linear(n_embd*block_size, n_hidden, bias=False), BatchNorm1d(n_hidden), Tanh(),
+           Linear(n_hidden, vocab_size),
+])
+
+with torch.no_grad():
+  model.layers[-1].weight *= 0.1
+  for layer in model.layers[:-1]:
+    if isinstance(layer, Linear):
+      layer.weight *= 1.67
+
+  parameters = [p for layer in model.layers for p in layer.parameters()]
   for para in parameters:
     para.requires_grad=True
 
@@ -189,6 +210,32 @@ for i in range(max_steps):
   loss.backward()
   lr = 0.1 if i<100000 else 0.01
   for p in parameters:
+    p.data = p.data - lr*p.grad
+
+  if i % 10000 == 0:
+    print(f'{i:7d}/{max_steps:7d}: {loss.item():.4f}')
+  lossi.append(loss.log10().item())
+
+
+  #improvement  - module - approach
+max_steps = 1000
+lossi = []
+ud = []
+for i in range(max_steps):
+  ix = torch.randint(0, Xtr.shape[0], (batch_size,), generator=g)
+  x = Xtr[ix]
+  #data = C[Xtr[ix]]
+  #x = data.view(data.shape[0], -1)
+
+  logits = model(x)
+  loss = torch.nn.functional.cross_entropy(logits, Ytr[ix])
+
+  for p in model.parameters():
+    p.grad = None
+
+  loss.backward()
+  lr = 0.1 if i<100000 else 0.01
+  for p in model.parameters():
     p.data = p.data - lr*p.grad
 
   if i % 10000 == 0:
