@@ -110,8 +110,11 @@ class Embedding:
     self.weight = torch.randn(vocab_size, n_embd)
     self.weight.requires_grad = True
 
-  def __call__(self, ix):
-    self.out = self.weight[ix]
+  def __call__(self, x):              #it will take data as input and not indices when called via model/sequential class
+  #ix = torch.randint(1, Xtr.shape[0], (4,))
+  #Xb, Yb = Xtr[ix], Ytr[ix]
+  #logits = model(Xb)
+    self.out = self.weight[x]
     return self.out
 
   def parameters(self):
