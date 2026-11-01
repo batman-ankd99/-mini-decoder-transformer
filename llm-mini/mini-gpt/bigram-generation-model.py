@@ -10,6 +10,7 @@ max_iters = 3000
 eval_iters = 300
 block_size = 8
 vocab_size = len(un_char)
+n_emdb = 32 #self attention model, bigram 65
 
 #part-2 itos and stoi, encode and decode
 stoi, itos = {}, {}
@@ -49,7 +50,8 @@ class BigramLanguageModel(nn.Module):
   def __init__(self):
   #def __init__(self,vocab_size):
     super().__init__()
-    self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
+    #self.token_embedding_table = nn.Embedding(vocab_size, vocab_size) -> bigram model
+    self.token_embedding_table = nn.Embedding(vocab_size, n_embd) #-> self-attention model
 
   def forward(self, idx, targets=None):
     logits = self.token_embedding_table(idx)
