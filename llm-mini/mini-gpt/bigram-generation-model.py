@@ -46,7 +46,8 @@ def get_batch(split):
 
 #part-5 bigramlanguage class
 class BigramLanguageModel(nn.Module):
-  def __init__(self,vocab_size):
+  def __init__(self):
+  #def __init__(self,vocab_size):
     super().__init__()
     self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
 
@@ -54,20 +55,20 @@ class BigramLanguageModel(nn.Module):
     logits = self.token_embedding_table(idx)
     if targets is None:
       loss = None
-    else:  
+    else:
       B, T, C = logits.shape
       loss = F.cross_entropy(logits.view(B*T,C), targets.view(B*T))
     return logits, loss
-    
+
   @torch.no_grad()
   def generate(self, idx, max_new_tokens):
     for _ in range(max_new_tokens):
       logits, loss = self(idx)
       logits = logits[:, -1, :]
       probs = F.softmax(logits, dim=-1)
-      idx_next = torch.multinomial(probs, num_samples=1) 
+      idx_next = torch.multinomial(probs, num_samples=1)
       idx = torch.cat((idx, idx_next), dim=1)
-    return idx  
+    return idx
 
 @torch.no_grad()
 def estimate_loss():
@@ -79,8 +80,7 @@ def estimate_loss():
       x, y = get_batch(split)
       logits, loss = model(x, y)
       losses[k] = loss.item()
-      
+
     out[split] = losses.mean()
   model.train()
   return out
-
