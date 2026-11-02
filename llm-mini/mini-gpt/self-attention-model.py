@@ -61,7 +61,8 @@ class BigramLanguageModel(nn.Module):
     B, T = idx.shape  #need T for creating position embeddings
     tok_emb = self.token_embedding_table(idx) #earlier these were logits #(B, T, C = 32)
     pos_emb = self.position_embedding_table(torch.arange(T))       # (T,C)
-    logits = self.lm_head(tok_emb)         #B, T, C - tok_emb and logits C=65 are different
+    x = tok_emb + pos_emb #B,T,C
+    logits = self.lm_head(x)         #B, T, C/vocab_size - tok_emb and logits C=65 are different
     if targets is None:
       loss = None
     else:
