@@ -54,7 +54,8 @@ class BigramLanguageModel(nn.Module):
     self.token_embedding_table = nn.Embedding(vocab_size, n_embd) #-> self-attention model
 
   def forward(self, idx, targets=None):
-    logits = self.token_embedding_table(idx)
+    logits = self.token_embedding_table(idx) #-> in bigram they were logits
+    #tok_emb = self.token_embedding_table(idx) #-> now just token embeddings
     if targets is None:
       loss = None
     else:
