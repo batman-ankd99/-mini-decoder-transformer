@@ -1,3 +1,5 @@
+#self-attention
+
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -10,7 +12,7 @@ max_iters = 3000
 eval_iters = 300
 block_size = 8
 vocab_size = len(un_char)
-n_emdb = 32 #self attention model, bigram 65
+n_embd = 32
 
 #part-2 itos and stoi, encode and decode
 stoi, itos = {}, {}
@@ -48,16 +50,18 @@ def get_batch(split):
 #part-5 bigramlanguage class
 class BigramLanguageModel(nn.Module):
   def __init__(self):
-  #def __init__(self,vocab_size):
     super().__init__()
-    #self.token_embedding_table = nn.Embedding(vocab_size, vocab_size) -> bigram model
-    self.token_embedding_table = nn.Embedding(vocab_size, n_embd) #-> self-attention model
-    self.lm_head = nn.Linear(n_embd, vocab_size)
+    #self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)  -> bigram model
+    self.token_embedding_table = nn.Embedding(vocab_size, n_embd)    #-> self-attention model
+    self.position_embedding_table = nn.Embedding(block_size, n_embd) #lookup table for position embeddings
+    self.lm_head = nn.Linear(n_embd, vocab_size)     #lm-head is object of linear class, later pass input and it will output logits. call it in forward
+
 
   def forward(self, idx, targets=None):
-    #logits = self.token_embedding_table(idx) -> in bigram they were logits
-    tok_emb = self.token_embedding_table(idx) #-> now just token embeddings
-    logits = self.lm_head(tok_emb)
+    B, T = idx.shape  #need T for creating position embeddings
+    tok_emb = self.token_embedding_table(idx) #earlier these were logits #(B, T, C = 32)
+    pos_emb = self.position_embedding_table(torch.arange(T))       # (T,C)
+    logits = self.lm_head(tok_emb)         #B, T, C - tok_emb and logits C=65 are different
     if targets is None:
       loss = None
     else:
