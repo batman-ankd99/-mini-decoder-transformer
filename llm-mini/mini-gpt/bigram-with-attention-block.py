@@ -8,10 +8,11 @@ batch_size = 4
 block_size = 8
 n_embd = 32
 head_size = 32
-max_iters = 3000
-eval_iter = 200
+max_iters = 4000
+eval_interval = 200
 uniq_char = list(sorted(set(text)))
 vocab_size = len(uniq_char)
+eval_iters = 20
 
 stoi, itos = {}, {}
 
@@ -46,29 +47,50 @@ train_data = data[:n]
 val_data = data[n:]
 
 def get_batch(split):
-  data = train_data if split == 'train_data' else 'val_data'
+  data = train_data if split == 'train' else val_data
 
   ix = torch.randint(0, len(data)-block_size, (batch_size,))
   x = torch.stack([data[i:i+block_size] for i in ix])
   targets = torch.stack([data[i+1:i+block_size+1] for i in ix])
   return x,targets
 
-x_train, y_train = get_batch('train_data')
+x_train, y_train = get_batch('train')
+
+@torch.no_grad
+def estimate_loss():
+  out = {}
+  model.eval()
+  for split in ['train', 'val']:
+    loss_int = []
+    for i in range(eval_iters):
+      x, y = get_batch(split)
+      logits, loss = model(x,y)
+      loss_int.append(loss.item())
+    out[split] = torch.tensor(loss_int).mean()
+  model.train()
+  return out
+
+@torch.no_grad
+def generate():
+  pass
 
 class Head(nn.Module):
   def __init__(self):
+    super().__init__()
     self.q = nn.Linear(n_embd, n_embd)
     self.k = nn.Linear(n_embd, n_embd)
     self.v = nn.Linear(n_embd, n_embd)
     self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
 
   def forward(self, x):
+    B, T, C = x.shape
     q_vec = self.q(x)                #4,8,32 x_emb -> out also 4,8,32
     k_vec = self.k(x)
     v_vec = self.v(x)
 
-    wei = q_vec @ k_vec.transpose(-2,-1) * head_size**-0.5           #4,8,32 @ 4,32,8 -> wei.shape = (4,8,8)
-    wei = F.softmax(wei, dim=1)                                      #(4,8,8)
+    wei = q_vec @ k_vec.transpose(-2,-1) * C**-0.5           #4,8,32 @ 4,32,8 -> wei.shape = (4,8,8)
+    wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))
+    wei = F.softmax(wei, dim=-1)                                      #(4,8,8)
 
     out = wei @ v_vec                                                # 4,8,8 @ 4,8,32 -> out.shape = (4,8,32)
     return out
@@ -90,10 +112,29 @@ class BigramLanguageModel(nn.Module):
 
     x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
 
-    logits = self.lm_head(x_emb)
+    logits = self.lm_head(x_att)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
     if targets is None:
       loss = None
     else:
       B,T,C = logits.shape                                                  #B, T, vocab_size
       loss = F.cross_entropy(logits.view(B*T, C), targets.view(B*T))
     return logits, loss
+
+
+
+######optimizer ######
+
+model = BigramLanguageModel()
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+losses = estimate_loss()
+
+for iter in range(max_iters):
+  if iter % eval_interval==0:
+    losses = estimate_loss()
+    print(f"step {iter}: train loss {losses['train']:.4f}, validation loss {losses['val']:.4f}")
+  #sample a batch to get loss
+  xb, yb = get_batch('train')
+  logits, loss = model(xb,yb)
+  optimizer.zero_grad(set_to_none=True)
+  loss.backward()
+  optimizer.step()
