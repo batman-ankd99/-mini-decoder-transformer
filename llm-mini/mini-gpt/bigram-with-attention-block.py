@@ -1,11 +1,8 @@
-#self-attention
+#Hyperparameters - code starts
 
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-torch.manual_seed(1337)
-
-#Hyperparameters - code starts
 
 batch_size = 4
 block_size = 8
@@ -15,6 +12,14 @@ max_iters = 3000
 eval_iter = 200
 uniq_char = list(sorted(set(text)))
 vocab_size = len(uniq_char)
+
+stoi, itos = {}, {}
+
+for i, char in enumerate(uniq_char):
+  stoi[char] = i
+  itos[i] = char
+
+#Hyperparameters - code starts
 
 #itos, stoi
 for i, char in enumerate(uniq_char):
@@ -51,7 +56,22 @@ def get_batch(split):
 x_train, y_train = get_batch('train_data')
 
 class Head(nn.Module):
-  pass
+  def __init__(self):
+    self.q = nn.Linear(n_embd, n_embd)
+    self.k = nn.Linear(n_embd, n_embd)
+    self.v = nn.Linear(n_embd, n_embd)
+    self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+
+  def forward(self, x):
+    q_vec = self.q(x)                #4,8,32 x_emb -> out also 4,8,32
+    k_vec = self.k(x)
+    v_vec = self.v(x)
+
+    wei = q_vec @ k_vec.transpose(-2,-1) * head_size**-0.5           #4,8,32 @ 4,32,8 -> wei.shape = (4,8,8)
+    wei = F.softmax(wei, dim=1)                                      #(4,8,8)
+
+    out = wei @ v_vec                                                # 4,8,8 @ 4,8,32 -> out.shape = (4,8,32)
+    return out
 
 
 class BigramLanguageModel(nn.Module):
@@ -60,12 +80,16 @@ class BigramLanguageModel(nn.Module):
     self.position_embedding_table = nn.Embedding(block_size, n_embd)
     self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
     self.lm_head = nn.Linear(n_embd, vocab_size)                          #output matrix should emit vocab_size scores
+    self.att_head = Head()
 
   def forward(self, x, targets=None):
     B, T = x.shape
     tok_emb = self.token_embedding_table(x)                               #B,T,C = n_embd
     pos_emb = self.position_embedding_table(torch.arange(T))     #T, C = n_embd
     x_emb = tok_emb + pos_emb                                             # B, T, C = n_embd      whereas logits to be B, T, vocab_size
+
+    x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
+
     logits = self.lm_head(x_emb)
     if targets is None:
       loss = None
