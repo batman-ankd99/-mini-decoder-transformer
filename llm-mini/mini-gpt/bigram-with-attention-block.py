@@ -120,7 +120,8 @@ class BigramLanguageModel(nn.Module):
       loss = F.cross_entropy(logits.view(B*T, C), targets.view(B*T))
     return logits, loss
 
-
+  def generate(self):
+    pass
 
 ######optimizer ######
 
