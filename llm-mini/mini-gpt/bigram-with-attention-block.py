@@ -8,7 +8,7 @@ batch_size = 4
 block_size = 8
 n_embd = 32
 head_size = 32
-max_iters = 4000
+max_iters = 40
 eval_interval = 200
 uniq_char = list(sorted(set(text)))
 vocab_size = len(uniq_char)
@@ -70,10 +70,6 @@ def estimate_loss():
   model.train()
   return out
 
-@torch.no_grad
-def generate():
-  pass
-
 class Head(nn.Module):
   def __init__(self):
     super().__init__()
@@ -120,9 +116,17 @@ class BigramLanguageModel(nn.Module):
       loss = F.cross_entropy(logits.view(B*T, C), targets.view(B*T))
     return logits, loss
 
-  def generate(self):
-    pass
-
+  @torch.no_grad()
+  def generate(self, idx, max_new_tokens):
+    for _ in range(max_new_tokens):
+      #idx= 00000000
+      idx_cond = idx[:, -block_size:]
+      logits, loss = self(idx_cond)
+      logits = logits[:, -1, :] #during prediction of last token , consider last token of sequence as bigram model
+      probs = F.softmax(logits, dim=-1)
+      idx_next = torch.multinomial(probs, num_samples=1)
+      idx = torch.cat((idx, idx_next), dim=1)
+    return idx
 ######optimizer ######
 
 model = BigramLanguageModel()
@@ -139,3 +143,6 @@ for iter in range(max_iters):
   optimizer.zero_grad(set_to_none=True)
   loss.backward()
   optimizer.step()
+
+context = torch.zeros((1,block_size), dtype=torch.long)
+print(decode(model.generate(context, max_new_tokens=500)[0].tolist()))
