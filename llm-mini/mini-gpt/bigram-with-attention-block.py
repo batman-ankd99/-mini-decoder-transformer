@@ -1,15 +1,16 @@
-#Hyperparameters - code starts
+#single head attention with Bigram Language Model
 
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+#Hyperparameters
 batch_size = 4
 block_size = 8
 n_embd = 32
 head_size = 32
-max_iters = 40
-eval_interval = 200
+max_iters = 200000
+eval_interval = 20000
 uniq_char = list(sorted(set(text)))
 vocab_size = len(uniq_char)
 eval_iters = 20
