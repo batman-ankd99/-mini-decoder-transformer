@@ -7,12 +7,13 @@ from torch.nn import functional as F
 batch_size = 4
 block_size = 8
 n_embd = 32
-head_size = 32
+head_size = 8
 max_iters = 40
 eval_interval = 200
 uniq_char = list(sorted(set(text)))
 vocab_size = len(uniq_char)
 eval_iters = 20
+head_num = 4
 
 stoi, itos = {}, {}
 
@@ -71,26 +72,37 @@ def estimate_loss():
   return out
 
 class Head(nn.Module):
-  def __init__(self):
+  def __init__(self, head_size):
     super().__init__()
-    self.q = nn.Linear(n_embd, n_embd)
-    self.k = nn.Linear(n_embd, n_embd)
-    self.v = nn.Linear(n_embd, n_embd)
+    self.q = nn.Linear(n_embd, head_size)
+    self.k = nn.Linear(n_embd, head_size)
+    self.v = nn.Linear(n_embd, head_size)
     self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
 
   def forward(self, x):
     B, T, C = x.shape
-    q_vec = self.q(x)                #4,8,32 x_emb -> out also 4,8,32
+    q_vec = self.q(x)                #4,8,32 = x_emb -> out also 4,8,head_size=32
     k_vec = self.k(x)
     v_vec = self.v(x)
 
-    wei = q_vec @ k_vec.transpose(-2,-1) * C**-0.5           #4,8,32 @ 4,32,8 -> wei.shape = (4,8,8)
+    wei = q_vec @ k_vec.transpose(-2,-1) * head_size**-0.5           #4,8,8 @ 4,8,8 -> wei.shape = (4,8,8)
     wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))
-    wei = F.softmax(wei, dim=-1)                                      #(4,8,8)
+    wei = F.softmax(wei, dim=-1)                                      #wei.shape - (4,8,8)
 
-    out = wei @ v_vec                                                # 4,8,8 @ 4,8,32 -> out.shape = (4,8,32)
+    out = wei @ v_vec                                                # 4,8,8 @ 4,8,8 -> out.shape = (4,8,8)
     return out
 
+class MultiHead(nn.Module):
+    def __init__(self, head_num, head_size):
+      super().__init__()
+      self.att_heads = nn.ModuleList([Head(head_size) for _ in range(head_num)])
+
+    def forward(self, x):
+        outputs = []
+        for i in self.att_heads:
+            outputs.append(i(x))
+        out = torch.cat(outputs, dim=-1)
+        return out
 
 class BigramLanguageModel(nn.Module):
   def __init__(self):
@@ -98,17 +110,19 @@ class BigramLanguageModel(nn.Module):
     self.position_embedding_table = nn.Embedding(block_size, n_embd)
     self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
     self.lm_head = nn.Linear(n_embd, vocab_size)                          #output matrix should emit vocab_size scores
-    self.att_head = Head()
+    #self.att_head = Head()
+    self.att_heads = MultiHead(head_num, head_size)
 
   def forward(self, x, targets=None):
     B, T = x.shape
     tok_emb = self.token_embedding_table(x)                               #B,T,C = n_embd
-    pos_emb = self.position_embedding_table(torch.arange(T))     #T, C = n_embd
-    x_emb = tok_emb + pos_emb                                             # B, T, C = n_embd      whereas logits to be B, T, vocab_size
+    pos_emb = self.position_embedding_table(torch.arange(T))     #T, C = n_embd = 32
+    x_emb = tok_emb + pos_emb                                             # B, T, C = n_embd = 32   whereas logits to be B, T, vocab_size
 
-    x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
+    #x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
+    x_matt = self.att_heads(x_emb)
 
-    logits = self.lm_head(x_att)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
+    logits = self.lm_head(x_matt)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
     if targets is None:
       loss = None
     else:
