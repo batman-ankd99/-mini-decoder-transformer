@@ -105,22 +105,39 @@ class MultiHead(nn.Module):
         out = torch.cat(outputs, dim=-1)
         return out
 
-class FeedForward:
-  def __init__(self, head_num):
-      super().__init__()
-      self.lin =
+#class FeedForward:
+ # def __init__(self, n_embd):
+  #  super().__init__()
+   # self.lin = nn.Linear(n_embd, n_embd)
+#    self.relu = nn.Relu()
 
+ # def forward(self, x):
+  #  x = self.lin(x)
+   # x = self.relu(output)
+  #  return x
 
-class Block(self, head_num, head_size):
-  def __init__(self, head_num, head_size):
-      super().__init__()
-      self.multi = MultiHead(head_num, head_size)
-      self.ffn = FeedForward()
+#ffn with sequential
+class FeedForward(nn.Module):
+  def __init__(self, n_embd):
+    super().__init__()
+    self.net = nn.Sequential(
+        nn.Linear(n_embd, n_embd),
+        nn.ReLU()
+    )
 
   def forward(self, x):
-    self
+    return self.net(x)
 
+class Block(nn.Module):
+  def __init__(self, head_num, head_size, n_embd):
+      super().__init__()
+      self.multi = MultiHead(head_num, head_size)
+      self.ffn = FeedForward(n_embd)
 
+  def forward(self, x):
+    x = self.multi(x)
+    x = self.ffn(x)
+    return x
 
 class BigramLanguageModel(nn.Module):
   def __init__(self):
