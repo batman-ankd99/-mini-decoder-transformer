@@ -147,6 +147,7 @@ class BigramLanguageModel(nn.Module):
     self.lm_head = nn.Linear(n_embd, vocab_size)                          #output matrix should emit vocab_size scores
     #self.att_head = Head()
     self.att_heads = MultiHead(head_num, head_size)
+    self.block = Block(head_num, head_size, n_embd)
 
   def forward(self, x, targets=None):
     B, T = x.shape
@@ -155,9 +156,11 @@ class BigramLanguageModel(nn.Module):
     x_emb = tok_emb + pos_emb                                             # B, T, C = n_embd = 32   whereas logits to be B, T, vocab_size
 
     #x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
-    x_matt = self.att_heads(x_emb)
+    #x_matt = self.att_heads(x_emb)
 
-    logits = self.lm_head(x_matt)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
+    x_block = self.block(x_emb)
+
+    logits = self.lm_head(x_block)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
     if targets is None:
       loss = None
     else:
