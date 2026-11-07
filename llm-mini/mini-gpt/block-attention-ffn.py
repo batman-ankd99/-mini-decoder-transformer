@@ -9,7 +9,7 @@ batch_size = 4
 block_size = 8
 n_embd = 32
 head_size = 8
-max_iters = 20000
+max_iters = 200000
 eval_interval = 5000
 uniq_char = list(sorted(set(text)))
 vocab_size = len(uniq_char)
@@ -129,8 +129,9 @@ class FeedForward(nn.Module):
     return self.net(x)
 
 class Block(nn.Module):
-  def __init__(self, head_num, head_size, n_embd):
+  def __init__(self, n_embd, head_num):
       super().__init__()
+      head_size = n_embd//head_num
       self.multi = MultiHead(head_num, head_size)
       self.ffn = FeedForward(n_embd)
 
@@ -147,7 +148,12 @@ class BigramLanguageModel(nn.Module):
     self.lm_head = nn.Linear(n_embd, vocab_size)                          #output matrix should emit vocab_size scores
     #self.att_head = Head()
     self.att_heads = MultiHead(head_num, head_size)
-    self.block = Block(head_num, head_size, n_embd)
+    #self.block = Block(head_num, n_embd)
+    self.blocks = nn.Sequential(
+        Block(n_embd, head_num=4),
+        Block(n_embd, head_num=4),
+        Block(n_embd, head_num=4),
+    )
 
   def forward(self, x, targets=None):
     B, T = x.shape
@@ -158,9 +164,11 @@ class BigramLanguageModel(nn.Module):
     #x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
     #x_matt = self.att_heads(x_emb)
 
-    x_block = self.block(x_emb)
 
-    logits = self.lm_head(x_block)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
+
+    x_emb = self.blocks(x_emb)
+
+    logits = self.lm_head(x_emb)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
     if targets is None:
       loss = None
     else:
