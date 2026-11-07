@@ -147,7 +147,7 @@ class BigramLanguageModel(nn.Module):
     self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
     self.lm_head = nn.Linear(n_embd, vocab_size)                          #output matrix should emit vocab_size scores
     #self.att_head = Head()
-    self.att_heads = MultiHead(head_num, head_size)
+    #self.att_heads = MultiHead(head_num, head_size)
     #self.block = Block(head_num, n_embd)
     self.blocks = nn.Sequential(
         Block(n_embd, head_num=4),
@@ -163,9 +163,6 @@ class BigramLanguageModel(nn.Module):
 
     #x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
     #x_matt = self.att_heads(x_emb)
-
-
-
     x_emb = self.blocks(x_emb)
 
     logits = self.lm_head(x_emb)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
