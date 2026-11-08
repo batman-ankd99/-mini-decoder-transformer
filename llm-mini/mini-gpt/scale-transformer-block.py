@@ -62,7 +62,7 @@ def get_batch(split):
   ix = torch.randint(0, len(data)-block_size, (batch_size,))
   x = torch.stack([data[i:i+block_size] for i in ix])
   targets = torch.stack([data[i+1:i+block_size+1] for i in ix])
-  return x,targets
+  return x.to(device),targets.to(device)
 
 x_train, y_train = get_batch('train')
 
@@ -192,7 +192,7 @@ class BigramLanguageModel(nn.Module):
   def forward(self, x, targets=None):
     B, T = x.shape
     tok_emb = self.token_embedding_table(x)                               #B,T,C = n_embd
-    pos_emb = self.position_embedding_table(torch.arange(T))     #T, C = n_embd = 32
+    pos_emb = self.position_embedding_table(torch.arange(T, device=device))     #T, C = n_embd = 32
     x_emb = tok_emb + pos_emb                                             # B, T, C = n_embd = 32   whereas logits to be B, T, vocab_size
 
     #x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
@@ -220,7 +220,7 @@ class BigramLanguageModel(nn.Module):
     return idx
 ######optimizer ######
 
-model = BigramLanguageModel()
+model = BigramLanguageModel().to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 losses = estimate_loss()
 
@@ -235,5 +235,5 @@ for iter in range(max_iters):
   loss.backward()
   optimizer.step()
 
-context = torch.zeros((1,block_size), dtype=torch.long)
+context = torch.zeros((1,block_size), dtype=torch.long, device=device)
 print(decode(model.generate(context, max_new_tokens=500)[0].tolist()))
