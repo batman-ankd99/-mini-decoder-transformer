@@ -139,21 +139,26 @@ class Block(nn.Module):
       head_size = n_embd//head_num
       self.multi = MultiHead(head_num, head_size)
       self.ffn = FeedForward(n_embd)
+      self.ln1 = LayerNorm(n_embd)
+      self.ln2 = LayerNorm(n_embd)
 
   def forward(self, x):
     x = x + self.multi(x)
+    x = self.ln1(x)
     x = x +self.ffn(x)
+    x = self.ln2(x)
     return x
 
 class LayerNorm(nn.Module):
   def __init__(self, n_embd, eps=1e-05):
+    super().__init__()
     self.eps = eps
-    self.bngain = torch.ones(n_embd, requires_grad=True)
-    self.bnbias = torch.zeros(n_embd, requires_grad=True)
+    self.bngain = nn.Parameter(torch.ones(n_embd))
+    self.bnbias = nn.Parameter(torch.zeros(n_embd))
 
   def forward(self, x):
-    bnmean = x.mean(1, keepdim=True)
-    bnvar = x.var(1, keepdim=True)
+    bnmean = x.mean(-1, keepdim=True)
+    bnvar = x.var(-1, keepdim=True, unbiased=False)
 
     xhat = (x - bnmean)/ torch.sqrt(bnvar + self.eps)
     self.out = self.bngain * xhat + self.bnbias
@@ -165,18 +170,14 @@ class BigramLanguageModel(nn.Module):
     self.position_embedding_table = nn.Embedding(block_size, n_embd)
     self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
     self.lm_head = nn.Linear(n_embd, vocab_size)                          #output matrix should emit vocab_size scores
+    self.ln_final = nn.LayerNorm(n_embd)
     #self.att_head = Head()
     #self.att_heads = MultiHead(head_num, head_size)
     #self.block = Block(head_num, n_embd)
     blocks = []
     for _ in range(n_layers):
-      blocks.append(*Block(n_embd, head_num=n_head))
+      blocks.append(Block(n_embd, head_num=n_head))
     self.blocks = nn.Sequential(*blocks)
-    #self.blocks = nn.Sequential(
-    #    Block(n_embd, head_num=4),
-    #    Block(n_embd, head_num=4),
-    #    Block(n_embd, head_num=4),
-    #)
 
   def forward(self, x, targets=None):
     B, T = x.shape
@@ -187,7 +188,7 @@ class BigramLanguageModel(nn.Module):
     #x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
     #x_matt = self.att_heads(x_emb)
     x_emb = self.blocks(x_emb)
-
+    x_emb = self.ln_final(x_emb)  # Final LayerNorm
     logits = self.lm_head(x_emb)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
     if targets is None:
       loss = None
