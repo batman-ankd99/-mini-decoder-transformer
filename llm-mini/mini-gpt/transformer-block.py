@@ -17,6 +17,7 @@ eval_iters = 20
 head_num = 4
 n_layers = 4
 n_head = 4 #no. of heads
+dropout = 0.2
 
 stoi, itos = {}, {}
 
@@ -81,6 +82,7 @@ class Head(nn.Module):
     self.k = nn.Linear(n_embd, head_size)
     self.v = nn.Linear(n_embd, head_size)
     self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+    self.dropout = nn.Dropout(dropout)
 
   def forward(self, x):
     B, T, C = x.shape
@@ -91,7 +93,7 @@ class Head(nn.Module):
     wei = q_vec @ k_vec.transpose(-2,-1) * head_size**-0.5           #4,8,8 @ 4,8,8 -> wei.shape = (4,8,8)
     wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))
     wei = F.softmax(wei, dim=-1)                                      #wei.shape - (4,8,8)
-
+    wei = self.dropout(wei)     #dropped out few attention scores so that some neurons dont communicate in some pass
     out = wei @ v_vec                                                # 4,8,8 @ 4,8,8 -> out.shape = (4,8,8)
     return out
 
@@ -100,13 +102,14 @@ class MultiHead(nn.Module):
       super().__init__()
       self.att_heads = nn.ModuleList([Head(head_size) for _ in range(head_num)])
       self.proj = nn.Linear(n_embd, n_embd)
+      self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         outputs = []
         for i in self.att_heads:
             outputs.append(i(x))
         out = torch.cat(outputs, dim=-1)
-        out = self.proj(out)                  #linear transformation of outcomes of all heads, combining them together
+        out = self.dropout(self.proj(out))                #linear transformation of outcomes of all heads, combining them together
         return out
 
 #class FeedForward:
@@ -128,6 +131,7 @@ class FeedForward(nn.Module):
         nn.Linear(n_embd, n_embd * 4),
         nn.ReLU(),
         nn.Linear(4 * n_embd, n_embd),
+        nn.Dropout(dropout),
     )
 
   def forward(self, x):
@@ -141,13 +145,14 @@ class Block(nn.Module):
       self.ffn = FeedForward(n_embd)
       self.ln1 = LayerNorm(n_embd)
       self.ln2 = LayerNorm(n_embd)
+      self.dropout = nn.Dropout(p=0.2)
 
   def forward(self, x):
-    x = x + self.multi(x)
-    x = self.ln1(x)
-    x = x +self.ffn(x)
-    x = self.ln2(x)
-    return x
+     x = x + self.dropout(self.multi(x)) # dropout applied before output of multi head merges back into residual path. original input
+     x = self.ln1(x)
+     x = x + self.dropout(self.ffn(x)) # dropout again
+     x = self.ln2(x)
+     return x
 
 class LayerNorm(nn.Module):
   def __init__(self, n_embd, eps=1e-05):
@@ -187,9 +192,9 @@ class BigramLanguageModel(nn.Module):
 
     #x_att = self.att_head(x_emb)                                 #x_emb - B,T,C = n_embd
     #x_matt = self.att_heads(x_emb)
-    x_emb = self.blocks(x_emb)
-    x_emb = self.ln_final(x_emb)  # Final LayerNorm
-    logits = self.lm_head(x_emb)                                  #x_att which is 4,8,32 goes in here, logits -> 4,8,65
+    x_emb = self.blocks(x_emb)                                     #attention , feedforward
+    x_emb = self.ln_final(x_emb)                                   # Final LayerNorm
+    logits = self.lm_head(x_emb)                                   #x_att which is 4,8,32 goes in here, logits -> 4,8,65
     if targets is None:
       loss = None
     else:
