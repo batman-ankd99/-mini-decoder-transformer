@@ -1,13 +1,14 @@
 #block-multi # Transformer implementation # #
 #Hyperparameters - code starts
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print("Using device:", device)
-if device == 'cuda':
-    print("GPU:", torch.cuda.get_device_name(0))
 
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print("Using device:", device)
+if device == 'cuda':
+    print("GPU:", torch.cuda.get_device_name(0))
 
 batch_size = 64     #how many independent sequences will be trained in parallel, every sequence is of n number of tokens together, n = block_size
 block_size = 256 # maximum context length for predictions
