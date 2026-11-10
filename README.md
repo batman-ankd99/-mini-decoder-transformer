@@ -27,9 +27,15 @@ The `learning-path/` directory contains the progression of concepts and implemen
 3. MLP and Batch Normalization
 4. Context-Based Prediction
 
+### Activation Distribution Analysis
+
+![Activation Distribution](results/activation-gradient.png)
+
+Analysed Tanh activation distributions using histograms, mean, standard deviation, and saturation percentage. This helped examine activation behaviour and identify neurons operating in saturated regions, where gradients become very small.
+
 ## Decoder Transformer Implementation
 
-The `decoder-transformer/` directory contains my Transformer implementation, covering:
+The `decoder-transformer-implementation/` directory contains my Transformer implementation, covering:
 
 - Token and positional embeddings
 - Self-attention (Query, Key and Value)
@@ -41,9 +47,7 @@ The `decoder-transformer/` directory contains my Transformer implementation, cov
 
 ## Training
 
-Trained a character-level decoder-only Transformer on Shakespeare's text using PyTorch.
-The model learned character-level patterns and generated text resembling the training corpus.
-The model was trained using next-character prediction with a causal self-attention mechanism. It learned character-level patterns and generated text resembling the Shakespeare training corpus.
+Trained a character-level decoder-only Transformer on Shakespeare's text using PyTorch. The model used next-character prediction with causal self-attention and learned character-level patterns, generating text resembling the training corpus.
 
 ## Repository Structure
 
