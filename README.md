@@ -42,15 +42,14 @@ The `decoder-transformer/` directory contains my Transformer implementation, cov
 ## Training
 
 Trained a character-level decoder-only Transformer on Shakespeare's text using PyTorch.
-
 The model learned character-level patterns and generated text resembling the training corpus.
+The model was trained using next-character prediction with a causal self-attention mechanism. It learned character-level patterns and generated text resembling the Shakespeare training corpus.
 
 ## Repository Structure
 
 - `learning-path/` – Progressive implementations of foundational deep learning concepts.
-- `decoder-transformer/` – Decoder-only Transformer implementation.
+- `decoder-transformer-implementation/` – Decoder-only Transformer implementation.
 - `data/` – Training dataset.
-- `docs/` – Architecture and technical documentation.
 - `results/` – Training metrics and generated text samples.
 
 ## Technologies
