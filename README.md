@@ -4,6 +4,20 @@ A from-scratch implementation of a **decoder-only Transformer language model** u
 
 This project documents my journey from understanding neural networks and backpropagation to implementing and training a Transformer model for character-level text generation.
 
+## Training Results
+
+### Training and Validation Loss
+
+![Training Loss](results/training-loss.png)
+
+### Generated Text Samples
+
+![Generated Text 1](results/text-generation-decoder-01.png)
+
+![Generated Text 2](results/text-generation-decoder-02.png)
+
+![Generated Text 3](results/text-generation-decoder-03.png)
+
 ## Learning Path
 
 The `learning-path/` directory contains the progression of concepts and implementations:
