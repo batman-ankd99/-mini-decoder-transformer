@@ -48,7 +48,7 @@ def get_batch(split):
   targets = torch.stack([data[i+1:i+ config.block_size+1] for i in ix])
   return x.to(device),targets.to(device)
 
-@torch.no_grad
+@torch.no_grad()
 def estimate_loss():
   out = {}
   model.eval()
@@ -58,7 +58,7 @@ def estimate_loss():
       x, y = get_batch(split)
       logits, loss = model(x,y)
       loss_int.append(loss.item())
-    out[split] = torch.tensor(loss_int).mean()
+    out[split] = torch.tensor(loss_int).mean().item()
   model.train()
   return out
 
@@ -66,12 +66,11 @@ def estimate_loss():
 
 model = BigramLanguageModel(config).to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
-losses = estimate_loss()
 
-for iter in range(config.max_iters):
-  if iter % config.eval_interval==0:
+for step in range(config.max_iters):
+  if step % config.eval_interval==0:
     losses = estimate_loss()
-    print(f"step {iter}: train loss {losses['train']:.4f}, validation loss {losses['val']:.4f}")
+    print(f"step {step}: train loss {losses['train']:.4f}, validation loss {losses['val']:.4f}")
   #sample a batch to get loss
   xb, yb = get_batch('train')
   logits, loss = model(xb,yb)
