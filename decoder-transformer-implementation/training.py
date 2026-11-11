@@ -2,35 +2,21 @@
 #Hyperparameters - code starts
 
 import torch
-import torch.nn as nn
-from torch.nn import functional as F
 from config import Config, device
 from model import BigramLanguageModel
 
 config = Config() #config object created to be passed in model classes
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print("Using device:", device)
 if device == 'cuda':
     print("GPU:", torch.cuda.get_device_name(0))
 
-head_size = 8
-max_iters = 5000
-eval_interval = 500
 uniq_char = list(sorted(set(text)))
 vocab_size = len(uniq_char)
 config.vocab_size = vocab_size
-eval_iters = 200
 
 stoi, itos = {}, {}
 
-for i, char in enumerate(uniq_char):
-  stoi[char] = i
-  itos[i] = char
-
-#Hyperparameters - code starts
-
-#itos, stoi
 for i, char in enumerate(uniq_char):
   stoi[char] = i
   itos[i] = char
@@ -62,15 +48,13 @@ def get_batch(split):
   targets = torch.stack([data[i+1:i+ config.block_size+1] for i in ix])
   return x.to(device),targets.to(device)
 
-x_train, y_train = get_batch('train')
-
 @torch.no_grad
 def estimate_loss():
   out = {}
   model.eval()
   for split in ['train', 'val']:
     loss_int = []
-    for i in range(eval_iters):
+    for i in range(config.eval_iters):
       x, y = get_batch(split)
       logits, loss = model(x,y)
       loss_int.append(loss.item())
@@ -84,8 +68,8 @@ model = BigramLanguageModel(config).to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
 losses = estimate_loss()
 
-for iter in range(max_iters):
-  if iter % eval_interval==0:
+for iter in range(config.max_iters):
+  if iter % config.eval_interval==0:
     losses = estimate_loss()
     print(f"step {iter}: train loss {losses['train']:.4f}, validation loss {losses['val']:.4f}")
   #sample a batch to get loss
@@ -95,5 +79,5 @@ for iter in range(max_iters):
   loss.backward()
   optimizer.step()
 
-context = torch.zeros((1,block_size), dtype=torch.long, device=device)
+context = torch.zeros((1,config.block_size), dtype=torch.long, device=device)
 print(decode(model.generate(context, max_new_tokens=500)[0].tolist()))
