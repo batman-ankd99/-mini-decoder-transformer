@@ -4,26 +4,23 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+from config import Config, device
+from model import BigramLanguageModel
+
+config = Config() #config object created to be passed in model classes
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print("Using device:", device)
 if device == 'cuda':
     print("GPU:", torch.cuda.get_device_name(0))
 
-batch_size = 64     #how many independent sequences will be trained in parallel, every sequence is of n number of tokens together, n = block_size
-block_size = 256 # maximum context length for predictions
-n_embd = 384
 head_size = 8
 max_iters = 5000
 eval_interval = 500
 uniq_char = list(sorted(set(text)))
 vocab_size = len(uniq_char)
+config.vocab_size = vocab_size
 eval_iters = 200
-head_num = 4
-n_layer = 6
-n_head = 6 #no. of heads
-dropout = 0.2
-learning_rate = 3e-4
 
 stoi, itos = {}, {}
 
@@ -60,9 +57,9 @@ val_data = data[n:]
 def get_batch(split):
   data = train_data if split == 'train' else val_data
 
-  ix = torch.randint(0, len(data)-block_size, (batch_size,))
-  x = torch.stack([data[i:i+block_size] for i in ix])
-  targets = torch.stack([data[i+1:i+block_size+1] for i in ix])
+  ix = torch.randint(0, len(data)- config.block_size, (config.batch_size,))
+  x = torch.stack([data[i:i+ config.block_size] for i in ix])
+  targets = torch.stack([data[i+1:i+ config.block_size+1] for i in ix])
   return x.to(device),targets.to(device)
 
 x_train, y_train = get_batch('train')
@@ -83,8 +80,8 @@ def estimate_loss():
 
 ######optimizer ######
 
-model = BigramLanguageModel().to(device)
-optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+model = BigramLanguageModel(config).to(device)
+optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
 losses = estimate_loss()
 
 for iter in range(max_iters):
